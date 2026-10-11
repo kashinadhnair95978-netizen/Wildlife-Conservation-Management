@@ -1,0 +1,16 @@
+import type { Incident } from '../types'
+
+export const incidentsData: Incident[] = [
+  { id: 'IN-2001', type: 'Poaching', location: 'Periyar West Buffer', date: '2026-08-29', time: '01:20', reportedBy: 'Raja Pillai', severity: 'Critical', status: 'Investigating', description: 'Animal carcass found with gunshot wound; snares recovered nearby.', notes: 'Anti-poaching team deployed.' },
+  { id: 'IN-2002', type: 'Forest Fire', location: 'Bandipur North Range', date: '2026-08-28', time: '13:45', reportedBy: 'Arun Karthik', severity: 'High', status: 'Investigating', description: 'Dry grass fire spreading along the northern boundary; fire line being cut.' },
+  { id: 'IN-2003', type: 'Human-Wildlife Conflict', location: 'Kumaly Fringe Villages', date: '2026-08-27', time: '19:10', reportedBy: 'Meera Krishnan', severity: 'Medium', status: 'Open', description: 'Elephant herd raided ragi fields; villagers demanding crop compensation guidance.' },
+  { id: 'IN-2004', type: 'Injured Animal', location: 'Mudumalai Transit Road', date: '2026-08-26', time: '09:30', reportedBy: 'Sunil Kumar', severity: 'High', status: 'Resolved', description: 'Sambar stag injured in vehicle collision; stabilized at veterinary camp.' },
+  { id: 'IN-2005', type: 'Illegal Activity', location: 'Silent Valley Core', date: '2026-08-24', time: '22:50', reportedBy: 'Vijay Menon', severity: 'Medium', status: 'Open', description: 'Suspected timber poaching; chainsaw noise reported near the buffer.' },
+  { id: 'IN-2006', type: 'Habitat Destruction', location: 'Nagarhole East', date: '2026-08-22', time: '11:00', reportedBy: 'Bharat Nath', severity: 'Low', status: 'Resolved', description: 'Unauthorized quarrying scar in the elephant corridor; fencing restored.' },
+  { id: 'IN-2007', type: 'Human-Wildlife Conflict', location: 'Thekkady Tea Estate', date: '2026-08-21', time: '16:40', reportedBy: 'Deepa Rani', severity: 'Medium', status: 'Investigating', description: 'Leopard sighting near worker quarters; awareness sessions planned.' },
+  { id: 'IN-2008', type: 'Poaching', location: 'Mukurthi Upper Shola', date: '2026-08-19', time: '03:15', reportedBy: 'Rahul Verma', severity: 'Critical', status: 'Resolved', description: 'Tahr carcass poached; two suspects apprehended by patrol unit.' },
+  { id: 'IN-2009', type: 'Forest Fire', location: 'Nagarhole Backwater', date: '2026-08-16', time: '14:00', reportedBy: 'Raja Pillai', severity: 'High', status: 'Resolved', description: 'Controlled burn overshot its boundary; contained by evening.' },
+  { id: 'IN-2010', type: 'Injured Animal', location: 'Kaziranga Central', date: '2026-08-14', time: '10:25', reportedBy: 'Arun Karthik', severity: 'High', status: 'Investigating', description: 'Rhinoceros calf with leg injury being treated on-site.' },
+  { id: 'IN-2011', type: 'Other', location: 'Thattekad Fringe', date: '2026-08-12', time: '15:05', reportedBy: 'Sunil Kumar', severity: 'Low', status: 'Resolved', description: 'Tour vehicle straying onto restricted forest track; driver fined and briefed.' },
+  { id: 'IN-2012', type: 'Illegal Activity', location: 'Periyar East Bank', date: '2026-08-10', time: '18:20', reportedBy: 'Meera Krishnan', severity: 'Medium', status: 'Resolved', description: 'Illegal fishing nets removed from Periyar Lake; two persons booked.' },
+]

@@ -1,0 +1,12 @@
+import type { Threat } from '../types'
+
+export const threatsData: Threat[] = [
+  { id: 'TH-101', type: 'Poaching', speciesAffected: 'Bengal Tiger', location: 'Periyar West Buffer', severity: 'Critical', dateIdentified: '2026-08-02', status: 'Active', trend: 'Rising', description: 'Snares and carcass traps found near the western boundary; aerial patrolling increased.' },
+  { id: 'TH-102', type: 'Human Encroachment', speciesAffected: 'Asian Elephant', location: 'Kumaly Corridor', severity: 'High', dateIdentified: '2026-07-28', status: 'Active', trend: 'Stable', description: 'Encroachment narrowing the elephant corridor along the riverine belt.' },
+  { id: 'TH-103', type: 'Habitat Loss', speciesAffected: 'Nilgiri Tahr', location: 'Mukurthi Upper Shola', severity: 'High', dateIdentified: '2026-07-19', status: 'Mitigating', trend: 'Declining', description: 'Invasive wattle expanding into tahr grassland; removal drive ongoing.' },
+  { id: 'TH-104', type: 'Water Scarcity', speciesAffected: 'Indian Gaur', location: 'Nagarhole Backwater', severity: 'Medium', dateIdentified: '2026-07-11', status: 'Monitored', trend: 'Rising', description: 'Seasonal water holes drying earlier than usual around Kabini.' },
+  { id: 'TH-105', type: 'Climate Impact', speciesAffected: 'One-horned Rhinoceros', location: 'Kaziranga Floodplain', severity: 'Medium', dateIdentified: '2026-06-30', status: 'Monitored', trend: 'Stable', description: 'Earlier monsoon floods covering low-lying rhino habitat.' },
+  { id: 'TH-106', type: 'Disease Outbreak', speciesAffected: 'Sambar Deer', location: 'Bandipur North Range', severity: 'Medium', dateIdentified: '2026-06-18', status: 'Mitigating', trend: 'Declining', description: 'Foot-and-mouth outbreak in the ungulate population; vaccination camps set up.' },
+  { id: 'TH-107', type: 'Pollution', speciesAffected: 'Sarus Crane', location: 'Etawah Wetlands', severity: 'Low', dateIdentified: '2026-06-05', status: 'Contained', trend: 'Declining', description: 'Agro-chemical runoff monitored; water quality improving.' },
+  { id: 'TH-108', type: 'Illegal Logging', speciesAffected: 'Great Himalayan Hornbill', location: 'Silent Valley Riparian Belt', severity: 'High', dateIdentified: '2026-05-22', status: 'Active', trend: 'Stable', description: 'Standing deadwood removal reducing nesting hollows for hornbills.' },
+]
