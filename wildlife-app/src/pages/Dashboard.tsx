@@ -22,6 +22,7 @@ import { ChartCard } from '../components/ChartCard'
 import { MonoTooltip, chartPalette } from '../components/chartTheme'
 import { TeamCard } from '../components/TeamCard'
 import { WildlifeImage } from '../components/WildlifeImage'
+import { ErrorState } from '../components/ErrorState'
 import { StatCardSkeleton } from '../components/LoadingSkeleton'
 import { IMAGES } from '../config/images'
 import {
@@ -75,7 +76,7 @@ const statConfig = [
 ] as const
 
 export default function Dashboard() {
-  const { data: stats, loading: statsLoading } = useAsyncData(dashboardService.getStats, [])
+  const { data: stats, loading: statsLoading, error: statsError, reload: reloadStats } = useAsyncData(dashboardService.getStats, [])
   const { data: sightings } = useAsyncData(dashboardService.getSightingsOverview, [])
   const { data: population } = useAsyncData(dashboardService.getSpeciesPopulation, [])
   const { data: incidents } = useAsyncData(dashboardService.getIncidentCategories, [])
@@ -89,8 +90,14 @@ export default function Dashboard() {
       <Hero />
       <section className="space-y-10">
         <section aria-label="Key statistics">
-          {statsLoading || !stats ? (
+          {statsLoading ? (
             <StatCardSkeleton count={6} />
+          ) : statsError || !stats ? (
+            <ErrorState
+              title="Unable to load dashboard statistics"
+              message={statsError ?? 'The dashboard data could not be loaded.'}
+              onRetry={reloadStats}
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               {statConfig.map((cfg, i) => (

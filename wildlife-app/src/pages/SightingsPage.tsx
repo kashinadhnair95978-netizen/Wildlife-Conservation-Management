@@ -13,6 +13,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -38,7 +39,7 @@ const emptyForm: SightingFormData = {
 }
 
 export default function SightingsPage() {
-  const { data, loading, reload } = useAsyncData(sightingService.getSightings, [])
+  const { data, loading, error, reload } = useAsyncData(sightingService.getSightings, [])
   const { data: speciesList } = useAsyncData(speciesService.getSpecies, [])
   const { data: areas } = useAsyncData(protectedAreaService.getProtectedAreas, [])
   const toast = useToast()
@@ -98,26 +99,36 @@ export default function SightingsPage() {
 
   const handleSubmit = async (form: SightingFormData) => {
     setBusy(true)
-    if (editing) {
-      await sightingService.updateSighting(editing.id, form)
-      toast.success('Sighting updated successfully')
-    } else {
-      await sightingService.createSighting({ ...form, id: generateId('SG-') })
-      toast.success('Sighting recorded successfully')
+    try {
+      if (editing) {
+        await sightingService.updateSighting(editing.id, form)
+        toast.success('Sighting updated successfully')
+      } else {
+        await sightingService.createSighting({ ...form, id: generateId('SG-') })
+        toast.success('Sighting recorded successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save sighting')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await sightingService.deleteSighting(deleting.id)
-    toast.success('Sighting record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await sightingService.deleteSighting(deleting.id)
+      toast.success('Sighting record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete sighting')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -157,6 +168,8 @@ export default function SightingsPage() {
 
       {loading ? (
         <TableSkeleton rows={7} cells={9} />
+      ) : error ? (
+        <ErrorState title="Could not load sightings" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No sightings found"

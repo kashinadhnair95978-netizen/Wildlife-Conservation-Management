@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: 'Can I export reports?',
-    a: 'Yes. The Reports module lets you view, generate and export each report. Exports currently produce a placeholder file generated in the browser.',
+    a: 'Yes. The Reports module lets you view, generate and export each report. Exports download the live database records for that report as a CSV file.',
   },
   {
     q: 'How do the charts update?',
@@ -46,7 +46,7 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 const guides = [
   { icon: Database, title: 'Data Architecture', description: 'Pages call service functions; services currently return mock data.', detail: 'src/services/' },
   { icon: Layers, title: 'Modules', description: 'Species, animals, habitats, sightings, incidents, threats and more.', detail: '14 modules' },
-  { icon: FileText, title: 'Reports & Analytics', description: 'Charts and report placeholders on the dashboard and reports center.', detail: 'src/pages/ReportsPage.tsx' },
+  { icon: FileText, title: 'Reports & Analytics', description: 'Live dashboard charts plus generated and CSV-exportable reports.', detail: 'src/pages/ReportsPage.tsx' },
 ]
 
 export default function HelpPage() {

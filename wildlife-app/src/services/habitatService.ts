@@ -1,13 +1,15 @@
-import { habitatsData } from '../data/habitats'
 import type { Habitat } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<Habitat>(habitatsData)
+const PATH = '/habitats'
 
 export const habitatService = {
-  getHabitats: () => store.list(),
-  getHabitatById: (id: string) => store.getById(id),
-  createHabitat: (record: Habitat) => store.create(record),
-  updateHabitat: (id: string, patch: Partial<Habitat>) => store.update(id, patch),
-  deleteHabitat: (id: string) => store.remove(id),
+  getHabitats: () => api.get<Habitat[]>(PATH),
+  getHabitatById: (id: string) => getOrUndefined<Habitat>(`${PATH}/${encodeURIComponent(id)}`),
+  createHabitat: (record: Habitat) => api.create<Habitat>(PATH, record),
+  updateHabitat: (id: string, patch: Partial<Habitat>) => api.update<Habitat>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteHabitat: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

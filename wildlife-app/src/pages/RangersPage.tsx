@@ -10,6 +10,7 @@ import { FilterBar, uniqueOptions } from '../components/FilterBar'
 import { Avatar } from '../components/Avatar'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { CardSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -31,7 +32,7 @@ const emptyForm: RangerFormData = {
 }
 
 export default function RangersPage() {
-  const { data, loading, reload } = useAsyncData(rangerService.getRangers, [])
+  const { data, loading, error, reload } = useAsyncData(rangerService.getRangers, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -65,26 +66,36 @@ export default function RangersPage() {
 
   const handleSubmit = async (form: RangerFormData) => {
     setBusy(true)
-    if (editing) {
-      await rangerService.updateRanger(editing.id, form)
-      toast.success('Ranger record updated successfully')
-    } else {
-      await rangerService.createRanger({ ...form, id: generateId('RG-') })
-      toast.success('Ranger added successfully')
+    try {
+      if (editing) {
+        await rangerService.updateRanger(editing.id, form)
+        toast.success('Ranger record updated successfully')
+      } else {
+        await rangerService.createRanger({ ...form, id: generateId('RG-') })
+        toast.success('Ranger added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save ranger')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await rangerService.deleteRanger(deleting.id)
-    toast.success('Ranger record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await rangerService.deleteRanger(deleting.id)
+      toast.success('Ranger record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete ranger')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -113,6 +124,8 @@ export default function RangersPage() {
 
       {loading ? (
         <CardSkeleton count={6} aspect="aspect-[auto]" />
+      ) : error ? (
+        <ErrorState title="Could not load rangers" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No rangers found"

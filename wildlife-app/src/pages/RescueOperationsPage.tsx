@@ -11,6 +11,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -39,7 +40,7 @@ const emptyForm: RescueFormData = {
 }
 
 export default function RescueOperationsPage() {
-  const { data, loading, reload } = useAsyncData(rescueOperationService.getRescueOperations, [])
+  const { data, loading, error, reload } = useAsyncData(rescueOperationService.getRescueOperations, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -74,26 +75,36 @@ export default function RescueOperationsPage() {
 
   const handleSubmit = async (form: RescueFormData) => {
     setBusy(true)
-    if (editing) {
-      await rescueOperationService.updateRescueOperation(editing.id, form)
-      toast.success('Rescue operation updated successfully')
-    } else {
-      await rescueOperationService.createRescueOperation({ ...form, id: generateId('RS-') })
-      toast.success('Rescue operation recorded successfully')
+    try {
+      if (editing) {
+        await rescueOperationService.updateRescueOperation(editing.id, form)
+        toast.success('Rescue operation updated successfully')
+      } else {
+        await rescueOperationService.createRescueOperation({ ...form, id: generateId('RS-') })
+        toast.success('Rescue operation recorded successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save rescue operation')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await rescueOperationService.deleteRescueOperation(deleting.id)
-    toast.success('Rescue operation record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await rescueOperationService.deleteRescueOperation(deleting.id)
+      toast.success('Rescue operation record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete rescue operation')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -119,6 +130,8 @@ export default function RescueOperationsPage() {
 
       {loading ? (
         <TableSkeleton rows={6} cells={9} />
+      ) : error ? (
+        <ErrorState title="Could not load rescue operations" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No rescue operations found"

@@ -1,13 +1,15 @@
-import { animalHealthData } from '../data/animalHealth'
 import type { AnimalHealth } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<AnimalHealth>(animalHealthData)
+const PATH = '/animal-health'
 
 export const animalHealthService = {
-  getHealthRecords: () => store.list(),
-  getHealthRecordById: (id: string) => store.getById(id),
-  createHealthRecord: (record: AnimalHealth) => store.create(record),
-  updateHealthRecord: (id: string, patch: Partial<AnimalHealth>) => store.update(id, patch),
-  deleteHealthRecord: (id: string) => store.remove(id),
+  getHealthRecords: () => api.get<AnimalHealth[]>(PATH),
+  getHealthRecordById: (id: string) => getOrUndefined<AnimalHealth>(`${PATH}/${encodeURIComponent(id)}`),
+  createHealthRecord: (record: AnimalHealth) => api.create<AnimalHealth>(PATH, record),
+  updateHealthRecord: (id: string, patch: Partial<AnimalHealth>) => api.update<AnimalHealth>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteHealthRecord: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

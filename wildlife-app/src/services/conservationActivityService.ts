@@ -1,13 +1,15 @@
-import { conservationActivitiesData } from '../data/conservationActivities'
 import type { ConservationActivity } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<ConservationActivity>(conservationActivitiesData)
+const PATH = '/conservation-activities'
 
 export const conservationActivityService = {
-  getActivities: () => store.list(),
-  getActivityById: (id: string) => store.getById(id),
-  createActivity: (record: ConservationActivity) => store.create(record),
-  updateActivity: (id: string, patch: Partial<ConservationActivity>) => store.update(id, patch),
-  deleteActivity: (id: string) => store.remove(id),
+  getActivities: () => api.get<ConservationActivity[]>(PATH),
+  getActivityById: (id: string) => getOrUndefined<ConservationActivity>(`${PATH}/${encodeURIComponent(id)}`),
+  createActivity: (record: ConservationActivity) => api.create<ConservationActivity>(PATH, record),
+  updateActivity: (id: string, patch: Partial<ConservationActivity>) => api.update<ConservationActivity>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteActivity: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

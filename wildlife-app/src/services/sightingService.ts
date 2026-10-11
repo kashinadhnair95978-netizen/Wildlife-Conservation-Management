@@ -1,18 +1,20 @@
-import { sightingsData } from '../data/sightings'
 import type { Sighting } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<Sighting>(sightingsData)
+const PATH = '/sightings'
 
 export const sightingService = {
-  getSightings: () => store.list(),
-  getSightingById: (id: string) => store.getById(id),
-  createSighting: (record: Sighting) => store.create(record),
-  updateSighting: (id: string, patch: Partial<Sighting>) => store.update(id, patch),
-  deleteSighting: (id: string) => store.remove(id),
+  getSightings: () => api.get<Sighting[]>(PATH),
+  getSightingById: (id: string) => getOrUndefined<Sighting>(`${PATH}/${encodeURIComponent(id)}`),
+  createSighting: (record: Sighting) => api.create<Sighting>(PATH, record),
+  updateSighting: (id: string, patch: Partial<Sighting>) => api.update<Sighting>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteSighting: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 
   exportCsv: async () => {
-    const rows = await store.list()
+    const rows = await api.get<Sighting[]>(PATH)
     const header = ['ID', 'Species', 'Location', 'Date', 'Time', 'Ranger', 'Count', 'Status']
     const body = rows.map((s) => [s.id, s.speciesId, s.location, s.date, s.time, s.ranger, s.count, s.status].join(','))
     return [header.join(','), ...body].join('\n')

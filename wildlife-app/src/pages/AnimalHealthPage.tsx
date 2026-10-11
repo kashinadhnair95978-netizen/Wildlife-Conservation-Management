@@ -11,6 +11,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -34,7 +35,7 @@ const emptyForm: HealthFormData = {
 }
 
 export default function AnimalHealthPage() {
-  const { data, loading, reload } = useAsyncData(animalHealthService.getHealthRecords, [])
+  const { data, loading, error, reload } = useAsyncData(animalHealthService.getHealthRecords, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -66,26 +67,36 @@ export default function AnimalHealthPage() {
 
   const handleSubmit = async (form: HealthFormData) => {
     setBusy(true)
-    if (editing) {
-      await animalHealthService.updateHealthRecord(editing.id, form)
-      toast.success('Health record updated successfully')
-    } else {
-      await animalHealthService.createHealthRecord({ ...form, id: generateId('HT-') })
-      toast.success('Health record added successfully')
+    try {
+      if (editing) {
+        await animalHealthService.updateHealthRecord(editing.id, form)
+        toast.success('Health record updated successfully')
+      } else {
+        await animalHealthService.createHealthRecord({ ...form, id: generateId('HT-') })
+        toast.success('Health record added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save health record')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await animalHealthService.deleteHealthRecord(deleting.id)
-    toast.success('Health record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await animalHealthService.deleteHealthRecord(deleting.id)
+      toast.success('Health record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete health record')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -110,6 +121,8 @@ export default function AnimalHealthPage() {
 
       {loading ? (
         <TableSkeleton rows={6} cells={10} />
+      ) : error ? (
+        <ErrorState title="Could not load health records" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No health records found"

@@ -324,7 +324,7 @@ export default function LandingPage() {
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-950/50 via-transparent to-transparent" aria-hidden="true" />
               <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full border border-white/20 bg-ink-950/60 px-4 py-2 text-xs font-medium text-white backdrop-blur-md sm:bottom-6 sm:left-6">
                 <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-white" aria-hidden="true" />
-                12 protected areas · live monitoring
+                {stats?.protectedAreas ?? 0} protected areas · live monitoring
               </div>
             </div>
           </Reveal>
@@ -332,10 +332,10 @@ export default function LandingPage() {
 
         <section ref={statsRef} className="border-y border-ink-200 bg-white transition-colors duration-300 dark:border-ink-800 dark:bg-ink-925">
           <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-ink-200 px-5 dark:divide-ink-800 sm:px-8 lg:grid-cols-4">
-            <Stat value={stats?.totalSpecies ?? 86} label="Monitored Species" active={statsVisible} />
-            <Stat value={stats?.totalAnimals ?? 1248} label="Tracked Animals" active={statsVisible} />
-            <Stat value={stats?.protectedAreas ?? 12} label="Protected Areas" active={statsVisible} />
-            <Stat value={stats?.activeSightings ?? 342} label="Active Sightings" active={statsVisible} />
+            <Stat value={stats?.totalSpecies ?? 0} label="Monitored Species" active={statsVisible} />
+            <Stat value={stats?.totalAnimals ?? 0} label="Tracked Animals" active={statsVisible} />
+            <Stat value={stats?.protectedAreas ?? 0} label="Protected Areas" active={statsVisible} />
+            <Stat value={stats?.activeSightings ?? 0} label="Active Sightings" active={statsVisible} />
           </div>
         </section>
 

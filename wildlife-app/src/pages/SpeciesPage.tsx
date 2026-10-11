@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, SearchX } from 'lucide-react'
+import { Plus, SearchX, AlertTriangle } from 'lucide-react'
 import { speciesService } from '../services/speciesService'
 import type { ConservationStatus, Species, SpeciesCategory } from '../types'
 import { useAsyncData } from '../hooks/useAsyncData'
@@ -39,7 +39,7 @@ const emptyForm: SpeciesFormData = {
 }
 
 export default function SpeciesPage() {
-  const { data, loading, reload } = useAsyncData(speciesService.getSpecies, [])
+  const { data, loading, error, reload } = useAsyncData(speciesService.getSpecies, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -86,26 +86,36 @@ export default function SpeciesPage() {
 
   const handleSubmit = async (form: SpeciesFormData) => {
     setBusy(true)
-    if (editing) {
-      await speciesService.updateSpecies(editing.id, form)
-      toast.success('Species updated successfully')
-    } else {
-      await speciesService.createSpecies({ ...form, id: generateId('SP-') })
-      toast.success('Species added successfully')
+    try {
+      if (editing) {
+        await speciesService.updateSpecies(editing.id, form)
+        toast.success('Species updated successfully')
+      } else {
+        await speciesService.createSpecies({ ...form, id: generateId('SP-') })
+        toast.success('Species added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save species')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await speciesService.deleteSpecies(deleting.id)
-    toast.success('Species record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await speciesService.deleteSpecies(deleting.id)
+      toast.success('Species record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete species')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -135,6 +145,8 @@ export default function SpeciesPage() {
 
       {loading ? (
         <TableSkeleton rows={6} cells={8} />
+      ) : error ? (
+        <LoadError message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No species found"
@@ -336,6 +348,21 @@ function Detail({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-ink-400">{label}</dt>
       <dd className="mt-1 text-sm font-medium text-ink-800">{value || '—'}</dd>
+    </div>
+  )
+}
+
+function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-status-red/30 bg-status-red/5 px-6 py-16 text-center">
+      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-status-red/20 bg-white text-status-red">
+        <AlertTriangle size={20} strokeWidth={1.5} />
+      </span>
+      <h3 className="font-display text-base font-semibold text-ink-900">Could not load species</h3>
+      <p className="mt-1.5 max-w-sm text-sm text-ink-500">{message}</p>
+      <button type="button" className="btn-outline mt-5" onClick={onRetry}>
+        Retry
+      </button>
     </div>
   )
 }

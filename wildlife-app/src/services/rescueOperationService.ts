@@ -1,13 +1,15 @@
-import { rescueOperationsData } from '../data/rescueOperations'
 import type { RescueOperation } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<RescueOperation>(rescueOperationsData)
+const PATH = '/rescue-operations'
 
 export const rescueOperationService = {
-  getRescueOperations: () => store.list(),
-  getRescueOperationById: (id: string) => store.getById(id),
-  createRescueOperation: (record: RescueOperation) => store.create(record),
-  updateRescueOperation: (id: string, patch: Partial<RescueOperation>) => store.update(id, patch),
-  deleteRescueOperation: (id: string) => store.remove(id),
+  getRescueOperations: () => api.get<RescueOperation[]>(PATH),
+  getRescueOperationById: (id: string) => getOrUndefined<RescueOperation>(`${PATH}/${encodeURIComponent(id)}`),
+  createRescueOperation: (record: RescueOperation) => api.create<RescueOperation>(PATH, record),
+  updateRescueOperation: (id: string, patch: Partial<RescueOperation>) => api.update<RescueOperation>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteRescueOperation: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

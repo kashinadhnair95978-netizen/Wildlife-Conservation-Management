@@ -1,13 +1,15 @@
-import { protectedAreasData } from '../data/protectedAreas'
 import type { ProtectedArea } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<ProtectedArea>(protectedAreasData)
+const PATH = '/protected-areas'
 
 export const protectedAreaService = {
-  getProtectedAreas: () => store.list(),
-  getProtectedAreaById: (id: string) => store.getById(id),
-  createProtectedArea: (record: ProtectedArea) => store.create(record),
-  updateProtectedArea: (id: string, patch: Partial<ProtectedArea>) => store.update(id, patch),
-  deleteProtectedArea: (id: string) => store.remove(id),
+  getProtectedAreas: () => api.get<ProtectedArea[]>(PATH),
+  getProtectedAreaById: (id: string) => getOrUndefined<ProtectedArea>(`${PATH}/${encodeURIComponent(id)}`),
+  createProtectedArea: (record: ProtectedArea) => api.create<ProtectedArea>(PATH, record),
+  updateProtectedArea: (id: string, patch: Partial<ProtectedArea>) => api.update<ProtectedArea>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteProtectedArea: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

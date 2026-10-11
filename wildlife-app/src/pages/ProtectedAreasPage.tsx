@@ -9,6 +9,7 @@ import { SearchBar } from '../components/SearchBar'
 import { FilterBar, uniqueOptions } from '../components/FilterBar'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -48,7 +49,7 @@ const pointCoords: Record<string, { x: number; y: number }> = {
 }
 
 export default function ProtectedAreasPage() {
-  const { data, loading, reload } = useAsyncData(protectedAreaService.getProtectedAreas, [])
+  const { data, loading, error, reload } = useAsyncData(protectedAreaService.getProtectedAreas, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -91,26 +92,36 @@ export default function ProtectedAreasPage() {
 
   const handleSubmit = async (form: ProtectedAreaFormData) => {
     setBusy(true)
-    if (editing) {
-      await protectedAreaService.updateProtectedArea(editing.id, form)
-      toast.success('Protected area updated successfully')
-    } else {
-      await protectedAreaService.createProtectedArea({ ...form, id: generateId('PA-') })
-      toast.success('Protected area added successfully')
+    try {
+      if (editing) {
+        await protectedAreaService.updateProtectedArea(editing.id, form)
+        toast.success('Protected area updated successfully')
+      } else {
+        await protectedAreaService.createProtectedArea({ ...form, id: generateId('PA-') })
+        toast.success('Protected area added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save protected area')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await protectedAreaService.deleteProtectedArea(deleting.id)
-    toast.success('Protected area deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await protectedAreaService.deleteProtectedArea(deleting.id)
+      toast.success('Protected area deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete protected area')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -140,6 +151,8 @@ export default function ProtectedAreasPage() {
 
       {loading ? (
         <TableSkeleton rows={6} cells={7} />
+      ) : error ? (
+        <ErrorState title="Could not load protected areas" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No protected areas found"

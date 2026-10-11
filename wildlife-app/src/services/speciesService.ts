@@ -1,13 +1,24 @@
-import { speciesData } from '../data/species'
 import type { Species } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, ApiError } from '../lib/api'
 
-const store = createCrudStore<Species>(speciesData)
+const PATH = '/species'
+
+async function findByPathOrUndefined(id: string): Promise<Species | undefined> {
+  try {
+    return await api.get<Species>(`${PATH}/${encodeURIComponent(id)}`)
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return undefined
+    throw error
+  }
+}
 
 export const speciesService = {
-  getSpecies: () => store.list(),
-  getSpeciesById: (id: string) => store.getById(id),
-  createSpecies: (record: Species) => store.create(record),
-  updateSpecies: (id: string, patch: Partial<Species>) => store.update(id, patch),
-  deleteSpecies: (id: string) => store.remove(id),
+  getSpecies: () => api.get<Species[]>(PATH),
+  getSpeciesById: findByPathOrUndefined,
+  createSpecies: (record: Species) => api.create<Species>(PATH, record),
+  updateSpecies: (id: string, patch: Partial<Species>) => api.update<Species>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteSpecies: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

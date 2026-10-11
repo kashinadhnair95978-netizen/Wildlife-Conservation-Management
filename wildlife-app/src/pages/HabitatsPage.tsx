@@ -9,6 +9,7 @@ import { SearchBar } from '../components/SearchBar'
 import { FilterBar, uniqueOptions } from '../components/FilterBar'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { CardSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -34,7 +35,7 @@ const emptyForm: HabitatFormData = {
 }
 
 export default function HabitatsPage() {
-  const { data, loading, reload } = useAsyncData(habitatService.getHabitats, [])
+  const { data, loading, error, reload } = useAsyncData(habitatService.getHabitats, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -69,26 +70,36 @@ export default function HabitatsPage() {
 
   const handleSubmit = async (form: HabitatFormData) => {
     setBusy(true)
-    if (editing) {
-      await habitatService.updateHabitat(editing.id, form)
-      toast.success('Habitat updated successfully')
-    } else {
-      await habitatService.createHabitat({ ...form, id: generateId('HB-') })
-      toast.success('Habitat added successfully')
+    try {
+      if (editing) {
+        await habitatService.updateHabitat(editing.id, form)
+        toast.success('Habitat updated successfully')
+      } else {
+        await habitatService.createHabitat({ ...form, id: generateId('HB-') })
+        toast.success('Habitat added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save habitat')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await habitatService.deleteHabitat(deleting.id)
-    toast.success('Habitat record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await habitatService.deleteHabitat(deleting.id)
+      toast.success('Habitat record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete habitat')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -114,6 +125,8 @@ export default function HabitatsPage() {
 
       {loading ? (
         <CardSkeleton count={6} aspect="aspect-[16/10]" />
+      ) : error ? (
+        <ErrorState title="Could not load habitats" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No habitats found"

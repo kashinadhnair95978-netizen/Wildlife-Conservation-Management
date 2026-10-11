@@ -11,6 +11,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -36,7 +37,7 @@ const emptyForm: IncidentFormData = {
 }
 
 export default function IncidentsPage() {
-  const { data, loading, reload } = useAsyncData(incidentService.getIncidents, [])
+  const { data, loading, error, reload } = useAsyncData(incidentService.getIncidents, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -84,26 +85,36 @@ export default function IncidentsPage() {
 
   const handleSubmit = async (form: IncidentFormData) => {
     setBusy(true)
-    if (editing) {
-      await incidentService.updateIncident(editing.id, form)
-      toast.success('Incident updated successfully')
-    } else {
-      await incidentService.createIncident({ ...form, id: generateId('IN-') })
-      toast.success('Incident reported successfully')
+    try {
+      if (editing) {
+        await incidentService.updateIncident(editing.id, form)
+        toast.success('Incident updated successfully')
+      } else {
+        await incidentService.createIncident({ ...form, id: generateId('IN-') })
+        toast.success('Incident reported successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save incident')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await incidentService.deleteIncident(deleting.id)
-    toast.success('Incident record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await incidentService.deleteIncident(deleting.id)
+      toast.success('Incident record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete incident')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -137,6 +148,8 @@ export default function IncidentsPage() {
 
       {loading ? (
         <TableSkeleton rows={7} cells={8} />
+      ) : error ? (
+        <ErrorState title="Could not load incidents" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No incidents found"

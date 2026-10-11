@@ -1,13 +1,15 @@
-import { threatsData } from '../data/threats'
 import type { Threat } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<Threat>(threatsData)
+const PATH = '/threats'
 
 export const threatService = {
-  getThreats: () => store.list(),
-  getThreatById: (id: string) => store.getById(id),
-  createThreat: (record: Threat) => store.create(record),
-  updateThreat: (id: string, patch: Partial<Threat>) => store.update(id, patch),
-  deleteThreat: (id: string) => store.remove(id),
+  getThreats: () => api.get<Threat[]>(PATH),
+  getThreatById: (id: string) => getOrUndefined<Threat>(`${PATH}/${encodeURIComponent(id)}`),
+  createThreat: (record: Threat) => api.create<Threat>(PATH, record),
+  updateThreat: (id: string, patch: Partial<Threat>) => api.update<Threat>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteThreat: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

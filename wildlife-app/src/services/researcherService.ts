@@ -1,13 +1,15 @@
-import { researchersData } from '../data/researchers'
 import type { Researcher } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<Researcher>(researchersData)
+const PATH = '/researchers'
 
 export const researcherService = {
-  getResearchers: () => store.list(),
-  getResearcherById: (id: string) => store.getById(id),
-  createResearcher: (record: Researcher) => store.create(record),
-  updateResearcher: (id: string, patch: Partial<Researcher>) => store.update(id, patch),
-  deleteResearcher: (id: string) => store.remove(id),
+  getResearchers: () => api.get<Researcher[]>(PATH),
+  getResearcherById: (id: string) => getOrUndefined<Researcher>(`${PATH}/${encodeURIComponent(id)}`),
+  createResearcher: (record: Researcher) => api.create<Researcher>(PATH, record),
+  updateResearcher: (id: string, patch: Partial<Researcher>) => api.update<Researcher>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteResearcher: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }

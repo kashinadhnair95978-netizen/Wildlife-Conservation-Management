@@ -11,6 +11,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -48,7 +49,7 @@ function ProgressBar({ value, status }: { value: number; status: ActivityStatus 
 }
 
 export default function ConservationActivitiesPage() {
-  const { data, loading, reload } = useAsyncData(conservationActivityService.getActivities, [])
+  const { data, loading, error, reload } = useAsyncData(conservationActivityService.getActivities, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -83,26 +84,36 @@ export default function ConservationActivitiesPage() {
 
   const handleSubmit = async (form: ActivityFormData) => {
     setBusy(true)
-    if (editing) {
-      await conservationActivityService.updateActivity(editing.id, form)
-      toast.success('Conservation activity updated successfully')
-    } else {
-      await conservationActivityService.createActivity({ ...form, id: generateId('AC-') })
-      toast.success('Conservation activity added successfully')
+    try {
+      if (editing) {
+        await conservationActivityService.updateActivity(editing.id, form)
+        toast.success('Conservation activity updated successfully')
+      } else {
+        await conservationActivityService.createActivity({ ...form, id: generateId('AC-') })
+        toast.success('Conservation activity added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save activity')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await conservationActivityService.deleteActivity(deleting.id)
-    toast.success('Activity record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await conservationActivityService.deleteActivity(deleting.id)
+      toast.success('Activity record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete activity')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -128,6 +139,8 @@ export default function ConservationActivitiesPage() {
 
       {loading ? (
         <TableSkeleton rows={7} cells={8} />
+      ) : error ? (
+        <ErrorState title="Could not load conservation activities" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No activities found"

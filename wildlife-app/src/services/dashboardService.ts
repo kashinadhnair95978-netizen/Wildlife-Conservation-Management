@@ -1,34 +1,32 @@
-import { dashboardStats, sightingsOverMonths, speciesPopulation, incidentCategories, activityStatusBreakdown, activityFeed, reportsData } from '../data/reports'
+import { api } from '../lib/api'
+import type { ActivityFeedItem, DashboardStats } from '../types'
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+export interface SightingsOverviewPoint {
+  month: string
+  sightings: number
+  verified: number
+}
+
+export interface SpeciesPopulationPoint {
+  name: string
+  population: number
+}
+
+export interface IncidentCategoryCount {
+  name: string
+  count: number
+}
+
+export interface ActivityStatusCount {
+  name: string
+  value: number
+}
 
 export const dashboardService = {
-  getStats: async () => {
-    await delay(260)
-    return dashboardStats
-  },
-  getSightingsOverview: async () => {
-    await delay(240)
-    return sightingsOverMonths
-  },
-  getSpeciesPopulation: async () => {
-    await delay(240)
-    return speciesPopulation
-  },
-  getIncidentCategories: async () => {
-    await delay(240)
-    return incidentCategories
-  },
-  getActivityStatusBreakdown: async () => {
-    await delay(240)
-    return activityStatusBreakdown
-  },
-  getActivityFeed: async () => {
-    await delay(220)
-    return activityFeed
-  },
-  getReports: async () => {
-    await delay(240)
-    return reportsData
-  },
+  getStats: () => api.get<DashboardStats>('/dashboard/stats'),
+  getSightingsOverview: () => api.get<SightingsOverviewPoint[]>('/dashboard/sightings-overview'),
+  getSpeciesPopulation: () => api.get<SpeciesPopulationPoint[]>('/dashboard/species-population'),
+  getIncidentCategories: () => api.get<IncidentCategoryCount[]>('/dashboard/incident-categories'),
+  getActivityStatusBreakdown: () => api.get<ActivityStatusCount[]>('/dashboard/activity-status'),
+  getActivityFeed: () => api.get<ActivityFeedItem[]>('/dashboard/activity-feed'),
 }

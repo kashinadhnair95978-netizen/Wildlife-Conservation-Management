@@ -12,6 +12,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -39,7 +40,7 @@ const emptyForm: AnimalFormData = {
 }
 
 export default function AnimalsPage() {
-  const { data: animals, loading, reload } = useAsyncData(animalService.getAnimals, [])
+  const { data: animals, loading, error, reload } = useAsyncData(animalService.getAnimals, [])
   const { data: speciesList } = useAsyncData(speciesService.getSpecies, [])
   const toast = useToast()
 
@@ -90,26 +91,36 @@ export default function AnimalsPage() {
 
   const handleSubmit = async (form: AnimalFormData) => {
     setBusy(true)
-    if (editing && typeof editing.id === 'string') {
-      await animalService.updateAnimal(editing.id, form)
-      toast.success('Animal record updated successfully')
-    } else {
-      await animalService.createAnimal({ ...form, id: generateId('AN-') })
-      toast.success('Animal added successfully')
+    try {
+      if (editing && typeof editing.id === 'string') {
+        await animalService.updateAnimal(editing.id, form)
+        toast.success('Animal record updated successfully')
+      } else {
+        await animalService.createAnimal({ ...form, id: generateId('AN-') })
+        toast.success('Animal added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save animal')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await animalService.deleteAnimal(deleting.id)
-    toast.success('Animal record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await animalService.deleteAnimal(deleting.id)
+      toast.success('Animal record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete animal')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -135,6 +146,8 @@ export default function AnimalsPage() {
 
       {loading ? (
         <TableSkeleton rows={7} cells={9} />
+      ) : error ? (
+        <ErrorState title="Could not load animals" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No animals found"

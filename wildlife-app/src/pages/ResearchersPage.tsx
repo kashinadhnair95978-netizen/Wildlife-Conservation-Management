@@ -10,6 +10,7 @@ import { FilterBar, uniqueOptions } from '../components/FilterBar'
 import { Avatar } from '../components/Avatar'
 import { StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { CardSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -31,7 +32,7 @@ const emptyForm: ResearcherFormData = {
 }
 
 export default function ResearchersPage() {
-  const { data, loading, reload } = useAsyncData(researcherService.getResearchers, [])
+  const { data, loading, error, reload } = useAsyncData(researcherService.getResearchers, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -65,26 +66,36 @@ export default function ResearchersPage() {
 
   const handleSubmit = async (form: ResearcherFormData) => {
     setBusy(true)
-    if (editing) {
-      await researcherService.updateResearcher(editing.id, form)
-      toast.success('Researcher profile updated successfully')
-    } else {
-      await researcherService.createResearcher({ ...form, id: generateId('RS-') })
-      toast.success('Researcher added successfully')
+    try {
+      if (editing) {
+        await researcherService.updateResearcher(editing.id, form)
+        toast.success('Researcher profile updated successfully')
+      } else {
+        await researcherService.createResearcher({ ...form, id: generateId('RS-') })
+        toast.success('Researcher added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save researcher')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await researcherService.deleteResearcher(deleting.id)
-    toast.success('Researcher profile deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await researcherService.deleteResearcher(deleting.id)
+      toast.success('Researcher profile deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete researcher')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -113,6 +124,8 @@ export default function ResearchersPage() {
 
       {loading ? (
         <CardSkeleton count={4} aspect="aspect-[auto]" />
+      ) : error ? (
+        <ErrorState title="Could not load researchers" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No researchers found"

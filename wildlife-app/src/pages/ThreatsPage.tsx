@@ -11,6 +11,7 @@ import { DataTable } from '../components/DataTable'
 import { RowActions } from '../components/RowActions'
 import { StatusBadge, StatusBadgeFor } from '../components/StatusBadge'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { Modal } from '../components/Modal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -36,7 +37,7 @@ const emptyForm: ThreatFormData = {
 }
 
 export default function ThreatsPage() {
-  const { data, loading, reload } = useAsyncData(threatService.getThreats, [])
+  const { data, loading, error, reload } = useAsyncData(threatService.getThreats, [])
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -84,26 +85,36 @@ export default function ThreatsPage() {
 
   const handleSubmit = async (form: ThreatFormData) => {
     setBusy(true)
-    if (editing) {
-      await threatService.updateThreat(editing.id, form)
-      toast.success('Threat updated successfully')
-    } else {
-      await threatService.createThreat({ ...form, id: generateId('TH-') })
-      toast.success('Threat record added successfully')
+    try {
+      if (editing) {
+        await threatService.updateThreat(editing.id, form)
+        toast.success('Threat updated successfully')
+      } else {
+        await threatService.createThreat({ ...form, id: generateId('TH-') })
+        toast.success('Threat record added successfully')
+      }
+      setFormOpen(false)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save threat')
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setFormOpen(false)
-    void reload()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     setBusy(true)
-    await threatService.deleteThreat(deleting.id)
-    toast.success('Threat record deleted successfully')
-    setBusy(false)
-    setDeleting(null)
-    void reload()
+    try {
+      await threatService.deleteThreat(deleting.id)
+      toast.success('Threat record deleted successfully')
+      setDeleting(null)
+      void reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete threat')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -137,6 +148,8 @@ export default function ThreatsPage() {
 
       {loading ? (
         <TableSkeleton rows={6} cells={8} />
+      ) : error ? (
+        <ErrorState title="Could not load threats" message={error} onRetry={() => void reload()} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No threats found"

@@ -1,13 +1,15 @@
-import { rangersData } from '../data/rangers'
 import type { Ranger } from '../types'
-import { createCrudStore } from './crudStore'
+import { api, getOrUndefined } from '../lib/api'
 
-const store = createCrudStore<Ranger>(rangersData)
+const PATH = '/rangers'
 
 export const rangerService = {
-  getRangers: () => store.list(),
-  getRangerById: (id: string) => store.getById(id),
-  createRanger: (record: Ranger) => store.create(record),
-  updateRanger: (id: string, patch: Partial<Ranger>) => store.update(id, patch),
-  deleteRanger: (id: string) => store.remove(id),
+  getRangers: () => api.get<Ranger[]>(PATH),
+  getRangerById: (id: string) => getOrUndefined<Ranger>(`${PATH}/${encodeURIComponent(id)}`),
+  createRanger: (record: Ranger) => api.create<Ranger>(PATH, record),
+  updateRanger: (id: string, patch: Partial<Ranger>) => api.update<Ranger>(`${PATH}/${encodeURIComponent(id)}`, patch),
+  deleteRanger: async (id: string): Promise<string> => {
+    await api.remove<{ id: string }>(`${PATH}/${encodeURIComponent(id)}`)
+    return id
+  },
 }
